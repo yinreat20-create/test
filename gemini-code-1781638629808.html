@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+    <meta name="theme-color" content="#0A1931"/>
+    <title>Silopi Sahibinden | İlan Platformu</title>
+    
+    <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        "portal-navy": "#0A1931",
+                        "portal-red": "#E61C24",
+                        "portal-bg": "#F5F7FA",
+                        "portal-gray": "#64748B",
+                        "portal-border": "#E2E8F0"
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        montserrat: ['Montserrat', 'sans-serif']
+                    },
+                    boxShadow: {
+                        'premium': '0 10px 40px -10px rgba(10,25,49,0.1)',
+                        'card-hover': '0 20px 40px -10px rgba(10,25,49,0.15)',
+                        'glass': '0 8px 32px 0 rgba(0, 0, 0, 0.1)',
+                        'soft': '0 5px 20px rgba(221, 221, 221, 0.4)'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #F5F7FA; color: #111827; -webkit-tap-highlight-color: transparent; }
+        .mobile-touch-active:active { transform: scale(0.96); opacity: 0.9; }
+        .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        .portal-hero {
+            background-image: url('https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=1920&auto=format&fit=crop');
+            background-size: cover;
+            background-position: center center;
+            background-repeat: no-repeat;
+            position: relative;
+        }
+        .portal-hero::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(10,25,49,0.85) 0%, rgba(230,28,36,0.35) 100%);
+            z-index: 0;
+        }
+        .glass-search {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+        .text-gradient {
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-image: linear-gradient(90deg, #FFFFFF, #FFE5E5);
+        }
+
+        /* Admin Tablo Scroll Bar */
+        .admin-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+        .admin-scroll::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+        .admin-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    </style>
+</head>
+<body class="font-sans antialiased select-none md:select-text">
+
+<div id="app">
+    <div style="text-align:center; padding: 60px 20px; font-family: sans-serif; color: #0A1931;">
+        <i class="fa-solid fa-spinner fa-spin" style="font-size: 40px; color: #E61C24; margin-bottom: 15px;"></i>
+        <h2 style="font-weight: bold; margin-bottom: 5px;">Silopi Sahibinden Yükleniyor...</h2>
+    </div>
+</div>
+
+<script>
+    const WHATSAPP_NUMBER = "905443894007";
+
+    // --- DEMO VERİLER ---
+    let vehicles = [
+        {
+            id: 1001,
+            name: "2020 Model Temiz Passat 1.5 TSI Business",
+            category: "Araç",
+            price: "1.450.000",
+            location: "Silopi, Yenişehir Mah.",
+            image: "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?q=80&w=800&auto=format&fit=crop",
+            description: "Aracım hatasız, boyasız ve tramersizdir. Aile aracı olarak özenle kullanılmış olup tüm bakımları zamanında yetkili servisinde yapılmıştır.\n\n- Orijinal kilometre\n- Yedek anahtarı ve kitapçıkları mevcuttur\n- İstenilen ekspertize gösterilebilir.",
+            isVIP: true,
+            date: "12.05.2024",
+            seller: "Ahmet Yılmaz",
+            sellerYear: "2022"
+        },
+        {
+            id: 1002,
+            name: "Merkezde 3+1 Lüks Satılık Daire",
+            category: "Ev / Arsa",
+            price: "2.100.000",
+            location: "Silopi, Ofis Mah.",
+            image: "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?q=80&w=800&auto=format&fit=crop",
+            description: "Ofis Mahallesi'nin en güzel konumunda, okullara, marketlere ve ulaşım araçlarına yürüme mesafesindeki dairemiz satılıktır.\n\n- 3 Oda 1 Salon, Geniş ve Ferah\n- Güney Cephe\n- Masrafsızdır.",
+            isVIP: false,
+            date: "Bugün",
+            seller: "Mehmet Kırboğa",
+            sellerYear: "2023"
+        }
+    ];
+
+    let currentUser = null;
+    let editId = null;
+    let uploadedImg = '';
+    let searchQuery = '';
+    let selectedCategory = 'All';
+
+    // Route Kontrolü
+    function route() {
+        const hash = window.location.hash;
+        if (hash === '#/admin') {
+            if (currentUser) renderAdminPanel();
+            else renderAdminLogin();
+        } else if (hash.startsWith('#/ilan/')) {
+            const id = parseInt(hash.split('/')[2]);
+            renderDetail(id);
+        } else {
+            renderHome();
+        }
+    }
+
+    // Arama ve Filtreleme
+    function handleSearch(val) {
+        searchQuery = val;
+        renderListings();
+    }
+
+    function setCategory(cat) {
+        if (selectedCategory === cat) selectedCategory = 'All';
+        else selectedCategory = cat;
+        renderCategories(); 
+        renderListings();   
+        document.getElementById('ilanlar-bolumu').scrollIntoView({behavior: 'smooth', block: 'start'});
+    }
+
+    function renderCategories() {
+        const container = document.getElementById('category-container');
+        if(!container) return;
+
+        const cats = [
+            {icon: 'fa-car-side', label: 'Araç', val: 'Araç', color: 'text-blue-600', bg: 'bg-blue-50', activeBg: 'bg-blue-600', activeText: 'text-white'}, 
+            {icon: 'fa-house-chimney', label: 'Emlak', val: 'Ev / Arsa', color: 'text-emerald-600', bg: 'bg-emerald-50', activeBg: 'bg-emerald-600', activeText: 'text-white'}, 
+            {icon: 'fa-key', label: 'Kiralık', val: 'Kiralık', color: 'text-purple-600', bg: 'bg-purple-50', activeBg: 'bg-purple-600', activeText: 'text-white'}
+        ];
+
+        container.innerHTML = cats.map(c => {
+            let isActive = selectedCategory === c.val;
+            let activeClasses = isActive ? `${c.activeBg} ${c.activeText} scale-110 shadow-lg` : `${c.bg} ${c.color} hover:-translate-y-2 hover:shadow-md`;
+            let textClasses = isActive ? 'text-portal-red' : 'text-portal-navy group-hover:text-portal-red';
+            return `
+                <button onclick="setCategory('${c.val}')" class="flex flex-col items-center gap-3 sm:gap-4 group cursor-pointer transition-transform">
+                    <div class="w-14 h-14 sm:w-20 sm:h-20 rounded-[20px] flex items-center justify-center text-2xl sm:text-3xl shadow-sm border border-black/5 transition-all duration-300 ${activeClasses}">
+                        <i class="fa-solid ${c.icon}"></i>
+                    </div>
+                    <span class="text-xs sm:text-[15px] font-bold transition-colors ${textClasses}">${c.label}</span>
+                </button>
+            `;
+        }).join('');
+    }
+
+    // Ana Sayfa İlan Kartları Çizimi
+    function renderListings() {
+        const container = document.getElementById('listings-container');
+        const titleEl = document.getElementById('listings-title');
+        const countSpan = document.getElementById('listings-count');
+        if(!container) return;
+
+        let filtered = vehicles.filter(v => {
+            let matchCat = selectedCategory === 'All' || v.category === selectedCategory;
+            let query = searchQuery.toLowerCase();
+            let matchSearch = (v.name && v.name.toLowerCase().includes(query)) || 
+                              (v.location && v.location.toLowerCase().includes(query));
+            return matchCat && matchSearch;
+        }).sort((a,b) => (b.isVIP ? 1 : 0) - (a.isVIP ? 1 : 0));
+
+        if(titleEl) titleEl.innerText = (selectedCategory === 'All' && !searchQuery) ? 'VİTRİN İLANLARI' : 'ARAMA SONUÇLARI';
+        if(countSpan) countSpan.innerText = filtered.length + ' İlan';
+
+        if (filtered.length > 0) {
+            container.innerHTML = filtered.map(v => `
+                <div class="group bg-white rounded-[25px] overflow-hidden shadow-soft border border-gray-100 transition-all duration-300 cursor-pointer flex flex-row sm:flex-col mb-3 sm:mb-0 transform hover:-translate-y-1" onclick="window.location.hash = '#/ilan/${v.id}'">
+                    <div class="w-[130px] h-[120px] sm:w-full sm:h-[200px] shrink-0 relative bg-gray-100 overflow-hidden">
+                        <img src="${v.image}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"/>
+                        ${v.isVIP ? `<div class="absolute top-2.5 left-2.5 bg-portal-red text-white text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider shadow-lg">VIP İLAN</div>` : ''}
+                    </div>
+                    <div class="p-4 sm:p-5 flex flex-col flex-1 min-w-0 bg-white relative z-10">
+                        <div class="flex items-center justify-between mb-1.5">
+                            <span class="text-portal-red font-bold text-[11px] uppercase tracking-wider">${v.category}</span>
+                        </div>
+                        <h3 class="font-bold text-sm sm:text-base text-portal-navy line-clamp-2 leading-snug mb-3 group-hover:text-portal-red transition-colors">${v.name}</h3>
+                        <div class="mt-auto border-t border-gray-100 pt-3">
+                            <div class="flex items-center text-gray-500 text-[12px] mb-1.5 font-medium truncate">
+                                <i class="fa-solid fa-location-dot mr-1.5"></i>
+                                <span class="truncate">${v.location}</span>
+                            </div>
+                            <div class="font-black text-portal-red text-lg sm:text-xl tracking-tight">${v.price ? v.price + ' TL' : 'Fiyat Sorun'}</div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        } else {
+            container.innerHTML = `
+                <div class="col-span-full py-20 flex flex-col items-center justify-center bg-white rounded-[25px] border border-dashed border-gray-300">
+                    <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+                        <i class="fa-solid fa-box-open text-4xl text-gray-400"></i>
+                    </div>
+                    <span class="text-portal-navy font-bold text-lg mb-1">İlan Bulunamadı</span>
+                    <button onclick="clearFilters()" class="mt-4 text-portal-red font-bold text-sm hover:underline">Filtreleri Temizle</button>
+                </div>
+            `;
+        }
+    }
+
+    // --- ORTAK BAŞLIK ---
+    const appHeader = `
+        <header class="bg-white/95 backdrop-blur-md border-b border-portal-border sticky top-0 z-40 shadow-sm">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 sm:h-20 flex justify-between items-center">
+                <div class="flex items-center gap-2 sm:gap-3 cursor-pointer" onclick="window.location.hash=''">
+                    <div class="w-8 h-8 sm:w-10 sm:h-10 bg-portal-red rounded-[10px] sm:rounded-xl flex items-center justify-center text-white shadow-lg shadow-red-500/30">
+                        <i class="fa-solid fa-location-dot sm:text-xl"></i>
+                    </div>
+                    <h1 class="text-[18px] sm:text-2xl font-black font-montserrat tracking-tight text-portal-navy">
+                        <span class="text-portal-red">SİLOPİ</span> SAHİBİNDEN
+                    </h1>
+                </div>
+                <a href="whatsapp://send?phone=${WHATSAPP_NUMBER}&text=Merhaba,%20ilan%20vermek%20istiyorum." class="bg-gradient-to-r from-portal-navy to-gray-800 text-white text-[11px] sm:text-sm font-bold px-4 py-2.5 sm:px-6 sm:py-3 rounded-xl hover:shadow-lg transition-all shadow-md flex items-center gap-2 mobile-touch-active">
+                    <i class="fa-solid fa-plus text-portal-red"></i>
+                    <span class="hidden sm:inline">Hemen İlan Ver</span>
+                    <span class="sm:hidden">İlan Ver</span>
+                </a>
+            </div>
+        </header>
+    `;
+
+    // --- İLAN DETAY SAYFASI (SENİN TASARIMIN) ---
+    function renderDetail(id) {
+        const app = document.getElementById('app');
+        const v = vehicles.find(x => x.id === id);
+        window.scrollTo(0, 0); 
+
+        if (!v) {
+            app.innerHTML = `<div class="p-10 text-center text-red-500 font-bold">İlan Bulunamadı</div>`;
+            return;
+        }
+
+        const msgText = encodeURIComponent(`Merhaba, #${v.id} numaralı ilanınız (${v.name}) hakkında bilgi almak istiyorum.`);
+
+        app.innerHTML = `
+            <div class="min-h-screen bg-portal-bg pb-24 lg:pb-10 font-sans text-[#111827]">
+                <div class="max-w-5xl mx-auto lg:px-4">
+                    <div class="bg-white h-[75px] rounded-b-[25px] lg:rounded-[25px] flex items-center justify-between px-5 shadow-soft lg:mt-4 relative z-10">
+                        <button onclick="window.location.hash=''" class="text-2xl text-portal-navy mobile-touch-active"><i class="fa-solid fa-arrow-left"></i></button>
+                        <div class="text-xl sm:text-2xl font-black font-montserrat tracking-tight text-portal-navy">
+                            <i class="fa-solid fa-location-dot text-portal-red"></i> <span class="text-portal-red">SİLOPİ</span> SAHİBİNDEN
+                        </div>
+                        <button class="text-2xl text-portal-navy mobile-touch-active"><i class="fa-regular fa-heart"></i></button>
+                    </div>
+
+                    <div class="lg:grid lg:grid-cols-3 lg:gap-6 lg:mt-6">
+                        <div class="lg:col-span-2">
+                            <div class="mt-5 lg:mt-0 h-[350px] sm:h-[450px] rounded-[25px] overflow-hidden mx-4 lg:mx-0 shadow-soft relative bg-gray-200">
+                                <img src="${v.image}" class="w-full h-full object-cover"/>
+                                <div class="absolute top-4 right-4 bg-black/60 text-white px-3 py-1 rounded-full text-xs font-bold backdrop-blur-md">1/1</div>
+                                <div class="absolute bottom-4 left-0 right-0 flex justify-center gap-1.5">
+                                    <div class="w-2 h-2 rounded-full bg-portal-red"></div>
+                                </div>
+                            </div>
+
+                            <div class="bg-white mt-4 mx-4 lg:mx-0 p-5 rounded-[25px] shadow-soft">
+                                <div class="flex justify-between items-center mb-1">
+                                    <div class="text-portal-red font-bold text-[16px] lg:text-lg uppercase tracking-wide">${v.category}</div>
+                                    <div class="text-gray-500 font-medium text-sm lg:text-base">${v.date}</div>
+                                </div>
+                                <div class="text-[22px] lg:text-[27px] font-extrabold text-portal-navy my-3 leading-snug">${v.name}</div>
+                                <div class="text-portal-red text-[28px] lg:text-[32px] font-bold mb-3">${v.price ? v.price + ' TL' : 'Fiyat Sorun'}</div>
+                                <div class="text-[#64748b] text-[16px] lg:text-[18px] font-medium flex items-center gap-2">
+                                    <i class="fa-solid fa-location-dot"></i> ${v.location}
+                                </div>
+                            </div>
+
+                            <div class="bg-white mt-4 mx-4 lg:mx-0 p-5 rounded-[25px] shadow-soft">
+                                <h2 class="text-[20px] lg:text-[22px] font-extrabold text-portal-navy flex items-center gap-3 mb-4 border-b border-gray-100 pb-4">
+                                    <i class="fa-solid fa-list-ul text-portal-red"></i> İlan Açıklaması
+                                </h2>
+                                <div class="text-[16px] lg:text-[18px] leading-[1.6] text-gray-700 whitespace-pre-wrap">${v.description}</div>
+                            </div>
+                        </div>
+
+                        <div class="lg:col-span-1 mt-4 lg:mt-0 space-y-4">
+                            <div class="bg-white mx-4 lg:mx-0 p-5 rounded-[25px] shadow-soft flex items-center justify-between">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-[60px] h-[60px] lg:w-[70px] lg:h-[70px] rounded-full bg-gray-200 flex items-center justify-center text-gray-400 text-3xl shrink-0">
+                                        <i class="fa-solid fa-user"></i>
+                                    </div>
+                                    <div>
+                                        <div class="text-[18px] lg:text-[22px] font-bold text-portal-navy leading-tight">${v.seller || 'Silopi Sahibinden'}</div>
+                                        <div class="text-sm text-gray-500 mt-0.5">Üye ${v.sellerYear || '2024'}</div>
+                                        <div class="text-[#16a34a] text-xs lg:text-sm font-bold mt-1.5 flex items-center gap-1">
+                                            <i class="fa-solid fa-circle-check"></i> Doğrulanmış Satıcı
+                                        </div>
+                                    </div>
+                                </div>
+                                <a href="tel:+${WHATSAPP_NUMBER}" class="text-portal-navy font-bold text-lg text-center hidden lg:block hover:text-portal-red transition-colors shrink-0">
+                                    <i class="fa-solid fa-phone mb-1"></i><br>Ara
+                                </a>
+                            </div>
+
+                            <div class="bg-white mt-4 mx-4 lg:mx-0 p-5 rounded-[25px] shadow-soft flex justify-between text-center overflow-x-auto no-scrollbar">
+                                <div class="text-[12px] lg:text-[14px] text-gray-500 min-w-[70px]">
+                                    <i class="fa-solid fa-fingerprint text-2xl mb-1.5 text-gray-400"></i><br>İlan No<br><b class="text-[14px] lg:text-[18px] text-portal-navy mt-0.5 block">#${v.id}</b>
+                                </div>
+                                <div class="text-[12px] lg:text-[14px] text-gray-500 min-w-[70px]">
+                                    <i class="fa-solid fa-layer-group text-2xl mb-1.5 text-gray-400"></i><br>Kategori<br><b class="text-[14px] lg:text-[18px] text-portal-navy mt-0.5 block">${v.category.split('/')[0].trim()}</b>
+                                </div>
+                                <div class="text-[12px] lg:text-[14px] text-gray-500 min-w-[70px]">
+                                    <i class="fa-regular fa-calendar text-2xl mb-1.5 text-gray-400"></i><br>Tarih<br><b class="text-[14px] lg:text-[18px] text-portal-navy mt-0.5 block">${v.date}</b>
+                                </div>
+                            </div>
+
+                            <div class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md p-4 shadow-[0_-5px_15px_rgba(0,0,0,0.05)] lg:static lg:bg-transparent lg:shadow-none lg:p-0 z-50">
+                                <div class="flex gap-3 w-full lg:mt-2">
+                                    <a href="tel:+${WHATSAPP_NUMBER}" class="w-1/2 h-[55px] lg:h-[60px] bg-[#102a43] text-white rounded-[15px] flex items-center justify-center font-bold text-[16px] lg:text-[18px] mobile-touch-active hover:bg-gray-800 transition-colors">
+                                        <i class="fa-solid fa-phone mr-2"></i> Ara
+                                    </a>
+                                    <a href="whatsapp://send?phone=${WHATSAPP_NUMBER}&text=${msgText}" class="w-1/2 h-[55px] lg:h-[60px] bg-[#16c763] text-white rounded-[15px] flex items-center justify-center font-bold text-[16px] lg:text-[18px] mobile-touch-active hover:bg-green-600 transition-colors shadow-lg shadow-green-500/30">
+                                        <i class="fa-brands fa-whatsapp text-xl mr-2"></i> Yaz
+                                    </a>
+                                </div>
+                            </div>
+
+                            <div class="text-center text-[#64748b] text-xs lg:text-sm mt-6 mb-8 lg:mb-0 px-4 flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-shield-halved"></i> Güvenli alışveriş için sahibinden iletişime geçin.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // --- ANA SAYFA ÇİZİMİ ---
+    function renderHome() {
+        const app = document.getElementById('app');
+        app.innerHTML = `
+            <div class="min-h-screen flex flex-col bg-portal-bg">
+                ${appHeader}
+                <section class="portal-hero pt-14 pb-24 sm:pt-20 sm:pb-32 px-4 relative overflow-hidden z-10">
+                    <div class="relative z-10 max-w-4xl mx-auto text-center">
+                        <span class="inline-block py-1.5 px-4 rounded-full bg-white/10 border border-white/20 text-white text-xs font-bold tracking-widest uppercase mb-5 backdrop-blur-md">YENİ NESİL İLAN PLATFORMU</span>
+                        <h2 class="text-3xl sm:text-5xl md:text-6xl font-black font-montserrat text-white mb-6 tracking-tight leading-tight">
+                            Silopi'nin En Güvenilir <br class="hidden sm:block"/> <span class="text-transparent bg-clip-text bg-gradient-to-r from-white to-red-100">İlan Pazarı</span>
+                        </h2>
+                        
+                        <div class="bg-white/95 backdrop-blur-xl p-2 sm:p-2.5 rounded-[20px] flex shadow-glass max-w-3xl mx-auto mt-10 border border-white/50">
+                            <div class="flex-1 flex items-center px-3 sm:px-5">
+                                <i class="fa-solid fa-magnifying-glass text-gray-400 text-lg mr-3"></i>
+                                <input type="text" id="searchInput" placeholder="Kelime, marka veya mahalle ara..." class="w-full bg-transparent border-none focus:ring-0 text-sm sm:text-base font-medium text-portal-navy placeholder-gray-400 outline-none" oninput="handleSearch(this.value)" autocomplete="off" />
+                            </div>
+                            <button onclick="document.getElementById('ilanlar-bolumu').scrollIntoView({behavior: 'smooth'})" class="bg-portal-red text-white px-6 py-3.5 rounded-[15px] font-bold text-sm sm:text-base hover:bg-red-700 transition-colors shadow-lg shadow-red-500/30">Ara</button>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="-mt-12 sm:-mt-16 max-w-5xl mx-auto px-4 w-full relative z-20">
+                    <div id="category-container" class="bg-white rounded-[25px] shadow-soft p-5 sm:p-8 flex justify-around sm:justify-center sm:gap-16 border border-gray-100"></div>
+                </section>
+
+                <section id="ilanlar-bolumu" class="py-16 max-w-7xl w-full mx-auto px-4 sm:px-6 z-10 scroll-mt-20">
+                    <div class="flex items-center gap-3 mb-8">
+                        <div class="w-1.5 h-8 bg-portal-red rounded-full"></div>
+                        <h2 id="listings-title" class="text-2xl sm:text-3xl font-black font-montserrat tracking-tight text-portal-navy">VİTRİN İLANLARI</h2>
+                        <span id="listings-count" class="ml-auto text-sm font-bold text-gray-500 bg-white px-3 py-1 rounded-lg border border-gray-200"></span>
+                    </div>
+                    <div id="listings-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6"></div>
+                </section>
+
+                <footer class="py-10 bg-white text-center mt-auto border-t border-gray-200">
+                    <div class="flex items-center justify-center gap-2 mb-3">
+                        <i class="fa-solid fa-location-dot text-portal-red"></i>
+                        <span class="text-lg font-black font-montserrat tracking-tight text-portal-navy">SİLOPİ SAHİBİNDEN</span>
+                    </div>
+                    <p class="text-[11px] font-bold text-gray-400 uppercase tracking-widest">© 2026 TÜM HAKLARI SAKLIDIR.</p>
+                </footer>
+            </div>
+        `;
+
+        document.getElementById('searchInput').value = searchQuery;
+        renderCategories();
+        renderListings();
+    }
+
+    // --- PROFESYONEL YENİ ADMİN PANELİ ---
+    
+    // Mobil Sidebar Toggle
+    window.toggleSidebar = function() {
+        const sidebar = document.getElementById('admin-sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+        if(sidebar.classList.contains('-translate-x-full')) {
+            sidebar.classList.remove('-translate-x-full');
+            overlay.classList.remove('hidden');
+        } else {
+            sidebar.classList.add('-translate-x-full');
+            overlay.classList.add('hidden');
+        }
+    }
+
+    function renderAdminLogin() {
+        const app = document.getElementById('app');
+        app.innerHTML = `
+            <div class="min-h-screen flex items-center justify-center p-4 bg-portal-bg">
+                <div class="w-full max-w-sm bg-white rounded-[25px] p-8 shadow-soft border border-gray-100">
+                    <h2 class="text-2xl font-black font-montserrat text-center text-portal-navy mb-4">Yönetici Girişi</h2>
+                    <div class="bg-yellow-50 border border-yellow-200 text-xs text-center text-yellow-800 p-2 rounded-lg mb-6">
+                        Demo: <b>admin@admin.com</b> / <b>123456</b>
+                    </div>
+                    <div id="loginError" class="bg-red-50 text-portal-red p-3 rounded-xl text-sm font-medium text-center mb-6 hidden"></div>
+                    <form onsubmit="handleLogin(event)" class="space-y-4">
+                        <div>
+                            <input type="email" id="loginEmail" required class="w-full bg-gray-50 border border-gray-200 rounded-[15px] px-4 py-3.5 text-sm focus:border-portal-navy focus:ring-0" placeholder="admin@admin.com"/>
+                        </div>
+                        <div>
+                            <input type="password" id="loginPassword" required class="w-full bg-gray-50 border border-gray-200 rounded-[15px] px-4 py-3.5 text-sm focus:border-portal-navy focus:ring-0" placeholder="Şifre"/>
+                        </div>
+                        <button type="submit" class="w-full bg-portal-navy text-white font-bold py-3.5 rounded-[15px] text-sm hover:bg-gray-800 transition-colors shadow-lg">Giriş Yap</button>
+                    </form>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderAdminPanel() {
+        const app = document.getElementById('app');
+        
+        let listHtml = '';
+        const sortedVehicles = [...vehicles].sort((a,b) => (b.isVIP ? 1 : 0) - (a.isVIP ? 1 : 0));
+        
+        if (sortedVehicles.length > 0) {
+            listHtml = sortedVehicles.map(v => `
+                <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="p-4 border-b border-gray-100">
+                        <div class="flex items-center gap-3">
+                            <img src="${v.image}" class="w-12 h-12 rounded-lg object-cover bg-gray-200 shrink-0"/>
+                            <div>
+                                <div class="text-sm font-bold text-portal-navy line-clamp-1">${v.name}</div>
+                                <div class="text-xs text-gray-500">${v.location}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="p-4 border-b border-gray-100 text-sm font-bold text-portal-navy whitespace-nowrap">${v.category}</td>
+                    <td class="p-4 border-b border-gray-100 text-sm font-bold text-portal-red whitespace-nowrap">${v.price} TL</td>
+                    <td class="p-4 border-b border-gray-100 whitespace-nowrap">
+                        <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold">Aktif</span>
+                    </td>
+                    <td class="p-4 border-b border-gray-100 whitespace-nowrap text-right">
+                        <button onclick="editVehicle(${v.id})" class="w-8 h-8 rounded-lg bg-gray-100 text-portal-navy hover:bg-gray-200 transition-colors mr-1"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="deleteVehicle(${v.id})" class="w-8 h-8 rounded-lg bg-red-50 text-portal-red hover:bg-red-100 transition-colors"><i class="fa-regular fa-trash-can"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+        } else {
+            listHtml = `<tr><td colspan="5" class="text-center py-10 text-gray-500 text-sm">Henüz ilan bulunmuyor.</td></tr>`;
+        }
+
+        app.innerHTML = `
+            <div class="flex h-screen bg-[#f6f8fc] overflow-hidden">
+                
+                <div id="sidebar-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-portal-navy/50 z-40 hidden md:hidden backdrop-blur-sm"></div>
+
+                <div id="admin-sidebar" class="fixed inset-y-0 left-0 w-[240px] bg-white z-50 transform -translate-x-full md:translate-x-0 transition-transform duration-300 flex flex-col border-r border-gray-100">
+                    <div class="h-[80px] flex items-center px-6 border-b border-gray-100 shrink-0">
+                        <div class="text-[20px] font-black font-montserrat text-portal-navy"><span class="text-portal-red">📍 SİLOPİ</span></div>
+                    </div>
+                    <div class="p-4 space-y-1.5 flex-1 overflow-y-auto">
+                        <div class="text-[11px] font-bold text-gray-400 mb-3 mt-2 px-3 uppercase tracking-wider">Menü</div>
+                        <a href="#/admin" class="flex items-center gap-3 bg-portal-red text-white px-4 py-3 rounded-xl font-bold text-[15px] shadow-md shadow-red-500/20"><i class="fa-solid fa-house w-5"></i> Ana Sayfa</a>
+                        <a href="#" class="flex items-center gap-3 text-portal-navy hover:bg-gray-50 px-4 py-3 rounded-xl font-bold text-[15px] transition-colors"><i class="fa-solid fa-file-lines w-5 text-gray-400"></i> İlanlar</a>
+                        <a href="#" class="flex items-center gap-3 text-portal-navy hover:bg-gray-50 px-4 py-3 rounded-xl font-bold text-[15px] transition-colors"><i class="fa-solid fa-users w-5 text-gray-400"></i> Kullanıcılar</a>
+                        <a href="#" class="flex items-center gap-3 text-portal-navy hover:bg-gray-50 px-4 py-3 rounded-xl font-bold text-[15px] transition-colors"><i class="fa-solid fa-comment-dots w-5 text-gray-400"></i> Mesajlar</a>
+                        <div class="text-[11px] font-bold text-gray-400 mb-3 mt-6 px-3 uppercase tracking-wider">Sistem</div>
+                        <a href="#" class="flex items-center gap-3 text-portal-navy hover:bg-gray-50 px-4 py-3 rounded-xl font-bold text-[15px] transition-colors"><i class="fa-solid fa-gear w-5 text-gray-400"></i> Ayarlar</a>
+                        <button onclick="handleLogout()" class="w-full flex items-center gap-3 text-portal-red hover:bg-red-50 px-4 py-3 rounded-xl font-bold text-[15px] transition-colors mt-2"><i class="fa-solid fa-right-from-bracket w-5"></i> Çıkış Yap</button>
+                    </div>
+                </div>
+
+                <div class="flex-1 flex flex-col md:ml-[240px] h-screen overflow-hidden">
+                    
+                    <header class="h-[80px] bg-white border-b border-gray-100 flex items-center justify-between px-4 sm:px-8 shrink-0">
+                        <button onclick="toggleSidebar()" class="md:hidden text-2xl text-portal-navy w-10 h-10 flex items-center justify-center rounded-lg hover:bg-gray-50"><i class="fa-solid fa-bars"></i></button>
+                        <div class="hidden md:block"></div>
+                        <div class="flex items-center gap-4 sm:gap-6">
+                            <button class="text-xl text-gray-400 hover:text-portal-navy transition-colors relative">
+                                <i class="fa-regular fa-bell"></i>
+                                <span class="absolute top-0 right-0 w-2.5 h-2.5 bg-portal-red rounded-full border-2 border-white"></span>
+                            </button>
+                            <div class="flex items-center gap-3 border-l border-gray-100 pl-4 sm:pl-6 cursor-pointer">
+                                <div class="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-gray-500 text-lg overflow-hidden">
+                                    <i class="fa-solid fa-user"></i>
+                                </div>
+                                <div class="hidden sm:block">
+                                    <div class="text-sm font-bold text-portal-navy leading-tight">Admin</div>
+                                    <div class="text-xs text-gray-500 font-medium">Yönetici</div>
+                                </div>
+                                <i class="fa-solid fa-chevron-down text-xs text-gray-400 hidden sm:block ml-1"></i>
+                            </div>
+                        </div>
+                    </header>
+
+                    <main class="flex-1 overflow-y-auto p-4 sm:p-8 admin-scroll">
+                        
+                        <div class="mb-8">
+                            <h1 class="text-2xl sm:text-[32px] font-black text-[#14213d] mb-1">Hoş Geldiniz, Admin 👋</h1>
+                            <p class="text-gray-500 text-sm font-medium">Silopi Sahibinden Yönetim Paneli</p>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
+                            <div class="bg-white p-6 rounded-[20px] shadow-soft">
+                                <div class="w-12 h-12 bg-red-50 rounded-xl flex items-center justify-center text-portal-red text-xl mb-4"><i class="fa-solid fa-file-lines"></i></div>
+                                <div class="text-[32px] font-bold text-portal-navy leading-none mb-1">${vehicles.length}</div>
+                                <div class="text-sm text-gray-500 font-medium">Sistemdeki İlan</div>
+                            </div>
+                            <div class="bg-white p-6 rounded-[20px] shadow-soft">
+                                <div class="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600 text-xl mb-4"><i class="fa-solid fa-eye"></i></div>
+                                <div class="text-[32px] font-bold text-portal-navy leading-none mb-1">3.245</div>
+                                <div class="text-sm text-gray-500 font-medium">Görüntülenme</div>
+                            </div>
+                            <div class="bg-white p-6 rounded-[20px] shadow-soft">
+                                <div class="w-12 h-12 bg-green-50 rounded-xl flex items-center justify-center text-green-600 text-xl mb-4"><i class="fa-solid fa-users"></i></div>
+                                <div class="text-[32px] font-bold text-portal-navy leading-none mb-1">356</div>
+                                <div class="text-sm text-gray-500 font-medium">Kayıtlı Kullanıcı</div>
+                            </div>
+                            <div class="bg-white p-6 rounded-[20px] shadow-soft">
+                                <div class="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center text-purple-600 text-xl mb-4"><i class="fa-solid fa-comment-dots"></i></div>
+                                <div class="text-[32px] font-bold text-portal-navy leading-none mb-1">24</div>
+                                <div class="text-sm text-gray-500 font-medium">Bekleyen Mesaj</div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
+                            
+                            <div class="lg:col-span-2 space-y-6 sm:space-y-8">
+                                <div class="bg-white rounded-[20px] p-6 shadow-soft">
+                                    <div class="flex items-center justify-between mb-6">
+                                        <h2 class="text-lg font-black text-portal-navy">Son Eklenen İlanlar</h2>
+                                        <button class="text-sm font-bold text-gray-500 border border-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-50">Tümünü Gör</button>
+                                    </div>
+                                    <div class="overflow-x-auto admin-scroll">
+                                        <table class="w-full text-left border-collapse">
+                                            <thead>
+                                                <tr class="text-[11px] uppercase tracking-wider text-gray-400 border-b border-gray-100">
+                                                    <th class="p-4 font-bold">İlan Başlığı</th>
+                                                    <th class="p-4 font-bold">Kategori</th>
+                                                    <th class="p-4 font-bold">Fiyat</th>
+                                                    <th class="p-4 font-bold">Durum</th>
+                                                    <th class="p-4 font-bold text-right">İşlem</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                ${listHtml}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="lg:col-span-1 space-y-6 sm:space-y-8">
+                                
+                                <div class="bg-white rounded-[20px] p-6 shadow-soft">
+                                    <h2 class="text-lg font-black text-portal-navy mb-5">İlan Durumu</h2>
+                                    <div class="flex flex-col gap-4 font-bold text-sm">
+                                        <div class="flex justify-between items-center"><span class="flex items-center gap-2"><div class="w-3 h-3 rounded-full bg-green-500"></div> Aktif</span> <span>${vehicles.length}</span></div>
+                                        <div class="flex justify-between items-center"><span class="flex items-center gap-2"><div class="w-3 h-3 rounded-full bg-orange-400"></div> Pasif</span> <span>22</span></div>
+                                        <div class="flex justify-between items-center"><span class="flex items-center gap-2"><div class="w-3 h-3 rounded-full bg-gray-400"></div> Beklemede</span> <span>8</span></div>
+                                    </div>
+                                </div>
+
+                                <div class="bg-white rounded-[20px] p-6 shadow-soft">
+                                    <h3 class="font-black text-lg text-portal-navy mb-5 pb-3 border-b border-gray-100">${editId ? 'İlanı Düzenle' : 'Yeni İlan Ekle'}</h3>
+                                    <form onsubmit="saveVehicle(event)" class="space-y-4">
+                                        <input type="text" id="vName" required class="w-full bg-gray-50 border border-gray-200 text-sm rounded-[12px] px-4 py-3" placeholder="İlan Başlığı"/>
+                                        <div class="grid grid-cols-2 gap-3">
+                                            <select id="vCat" class="w-full bg-gray-50 border border-gray-200 text-sm rounded-[12px] px-3 py-3 font-medium text-portal-navy">
+                                                <option value="Araç">Araç</option>
+                                                <option value="Ev / Arsa">Ev / Arsa</option>
+                                                <option value="Kiralık">Kiralık</option>
+                                            </select>
+                                            <input type="text" id="vPrice" class="w-full bg-gray-50 border border-gray-200 text-sm rounded-[12px] px-3 py-3" placeholder="Fiyat (TL)"/>
+                                        </div>
+                                        <input type="text" id="vLoc" class="w-full bg-gray-50 border border-gray-200 text-sm rounded-[12px] px-4 py-3" placeholder="Konum (Merkez)"/>
+                                        <label class="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-gray-300 rounded-[12px] cursor-pointer bg-gray-50 hover:border-portal-navy transition-colors overflow-hidden">
+                                            ${uploadedImg ? `<img src="${uploadedImg}" class="w-full h-full object-cover"/>` : `<div class="text-center text-gray-400 font-bold text-xs"><i class="fa-solid fa-camera text-xl mb-1"></i><br>Fotoğraf Seç</div>`}
+                                            <input type="file" accept="image/*" class="hidden" onchange="handleFile(this)"/>
+                                        </label>
+                                        <textarea id="vDesc" required rows="3" class="w-full bg-gray-50 border border-gray-200 text-sm rounded-[12px] px-4 py-3 resize-none" placeholder="Açıklama..."></textarea>
+                                        <label class="flex items-center gap-2 cursor-pointer p-1">
+                                            <input type="checkbox" id="vVIP" class="rounded text-portal-red w-4 h-4"/>
+                                            <span class="text-xs font-bold text-portal-navy">VIP İlan Yap (Öne Çıkar)</span>
+                                        </label>
+                                        <button type="submit" id="saveBtn" class="w-full bg-portal-red text-white text-sm font-bold py-3.5 rounded-[12px] shadow-lg shadow-red-500/20 hover:bg-red-700 transition-colors">KAYDET</button>
+                                        ${editId ? `<button type="button" onclick="cancelEdit()" class="w-full bg-gray-100 text-gray-600 text-sm font-bold py-3.5 rounded-[12px] hover:bg-gray-200 transition-colors mt-2">İPTAL</button>` : ''}
+                                    </form>
+                                </div>
+
+                            </div>
+                        </div>
+
+                    </main>
+                </div>
+            </div>
+        `;
+
+        if(editId) {
+            const v = vehicles.find(x => x.id === editId);
+            setTimeout(() => {
+                document.getElementById('vName').value = v.name;
+                document.getElementById('vCat').value = v.category;
+                document.getElementById('vPrice').value = v.price;
+                document.getElementById('vLoc').value = v.location;
+                document.getElementById('vDesc').value = v.description;
+                document.getElementById('vVIP').checked = v.isVIP;
+            }, 50);
+        }
+    }
+
+    // --- SİSTEM İŞLEVLERİ ---
+    window.handleLogin = function(e) {
+        e.preventDefault();
+        const email = document.getElementById('loginEmail').value;
+        const pass = document.getElementById('loginPassword').value;
+        if (email === 'admin@admin.com' && pass === '123456') {
+            currentUser = { email };
+            window.location.hash = '#/admin';
+        } else {
+            const err = document.getElementById('loginError');
+            err.innerText = 'Hatalı giriş! E-posta: admin@admin.com Şifre: 123456';
+            err.style.display = 'block';
+        }
+    };
+
+    window.handleLogout = function() {
+        currentUser = null;
+        window.location.hash = '';
+    };
+
+    window.handleFile = function(input) {
+        const file = input.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                uploadedImg = reader.result;
+                renderAdminPanel(); 
+            }
+            reader.readAsDataURL(file);
+        }
+    };
+
+    window.saveVehicle = function(e) {
+        e.preventDefault();
+        const name = document.getElementById('vName').value;
+        const cat = document.getElementById('vCat').value;
+        const price = document.getElementById('vPrice').value;
+        const loc = document.getElementById('vLoc').value;
+        const desc = document.getElementById('vDesc').value;
+        const vip = document.getElementById('vVIP').checked;
+        
+        const btn = document.getElementById('saveBtn');
+        btn.innerText = "KAYDEDİLİYOR...";
+        btn.disabled = true;
+
+        setTimeout(() => {
+            let img = uploadedImg;
+            if (editId) {
+                const existing = vehicles.find(x => x.id === editId);
+                if (!img) img = existing.image;
+                vehicles = vehicles.map(v => v.id === editId ? {id: v.id, name, category: cat, price, location: loc, image: img, description: desc, isVIP: vip, date: existing.date, seller: existing.seller, sellerYear: existing.sellerYear} : v);
+            } else {
+                if (!img) { 
+                    alert('Lütfen fotoğraf yükleyin!'); 
+                    btn.innerText="KAYDET"; 
+                    btn.disabled=false; 
+                    return; 
+                }
+                let newId = Math.floor(1000 + Math.random() * 9000);
+                vehicles.unshift({ id: newId, name, category: cat, price, location: loc, image: img, description: desc, isVIP: vip, date: 'Bugün', seller: 'Silopi Sahibinden', sellerYear: '2024' });
+            }
+            
+            editId = null;
+            uploadedImg = '';
+            renderAdminPanel();
+        }, 300);
+    };
+
+    window.deleteVehicle = function(id) {
+        if (confirm('Bu ilanı silmek istediğinize emin misiniz?')) {
+            vehicles = vehicles.filter(v => v.id !== id);
+            renderAdminPanel();
+        }
+    };
+
+    window.editVehicle = function(id) {
+        const v = vehicles.find(x => x.id === id);
+        editId = v.id;
+        uploadedImg = v.image;
+        renderAdminPanel();
+        // Form alanına scroll yap
+        document.querySelector('form').scrollIntoView({behavior: 'smooth', block: 'center'});
+    };
+
+    window.cancelEdit = function() {
+        editId = null;
+        uploadedImg = '';
+        renderAdminPanel();
+    };
+
+    window.addEventListener('hashchange', route);
+    window.onload = route;
+
+</script>
+</body>
+</html>
