@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+    <meta name="theme-color" content="#f5f6fa"/>
+    <title>Silopi Sahibinden | İlan Platformu</title>
+    
+    <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        "portal-navy": "#102a43",
+                        "portal-red": "#e51c2a",
+                        "portal-bg": "#f5f6fa",
+                        "whatsapp": "#16c763",
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        montserrat: ['Montserrat', 'sans-serif']
+                    },
+                    boxShadow: {
+                        'soft': '0 5px 20px rgba(221, 221, 221, 0.6)',
+                        'card-hover': '0 20px 40px -10px rgba(10,25,49,0.15)'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #f5f6fa; color: #111827; -webkit-tap-highlight-color: transparent; }
+        .mobile-touch-active:active { transform: scale(0.96); opacity: 0.9; }
+        .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        
+        /* Kaydırma çubuklarını gizle ama kaydırma özelliğini koru */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        .portal-hero {
+            background-image: url('https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=1920&auto=format&fit=crop');
+            background-size: cover;
+            background-position: center center;
+            background-repeat: no-repeat;
+            position: relative;
+        }
+        .portal-hero::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(16,42,67,0.85) 0%, rgba(229,28,42,0.35) 100%);
+            z-index: 0;
+        }
+    </style>
+</head>
+<body class="font-sans antialiased select-none md:select-text">
+
+<div id="app">
+    <div style="text-align:center; padding: 60px 20px; font-family: sans-serif; color: #102a43;">
+        <i class="fa-solid fa-spinner fa-spin" style="font-size: 40px; color: #e51c2a; margin-bottom: 15px;"></i>
+        <h2 style="font-weight: bold; margin-bottom: 5px;">Silopi Sahibinden Yükleniyor...</h2>
+    </div>
+</div>
+
+<script>
+    const SYSTEM_PHONE = "905443894007"; // Sadece ilan verme yönlendirmeleri için ana numara
+
+    // --- DEMO VERİLER (Çoklu Fotoğraf ve İlana Özel Numaralar) ---
+    let vehicles = [
+        {
+            id: 1001,
+            name: "2020 Model Temiz Passat 1.5 TSI Business",
+            category: "Araç",
+            price: "1.450.000",
+            location: "Silopi, Yenişehir Mah.",
+            images: [
+                "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?q=80&w=800&auto=format&fit=crop",
+                "https://images.unsplash.com/photo-1550546682-14300ceab83f?q=80&w=800&auto=format&fit=crop"
+            ],
+            description: "Aracım hatasız, boyasız ve tramersizdir. Aile aracı olarak özenle kullanılmış olup tüm bakımları zamanında yetkili servisinde yapılmıştır.\n\n- Orijinal kilometre\n- Yedek anahtarı ve kitapçıkları mevcuttur\n- İstenilen ekspertize gösterilebilir.",
+            isVIP: true,
+            date: "12.05.2024",
+            seller: "Ahmet Yılmaz",
+            hideSeller: false,
+            sellerYear: "2022",
+            phone: "905551234567" // Bu ilanın sahibinin numarası
+        },
+        {
+            id: 1002,
+            name: "Merkezde 3+1 Lüks Satılık Daire",
+            category: "Ev / Arsa",
+            price: "2.100.000",
+            location: "Silopi, Ofis Mah.",
+            images: [
+                "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?q=80&w=800&auto=format&fit=crop"
+            ],
+            description: "Ofis Mahallesi'nin en güzel konumunda, okullara, marketlere ve ulaşım araçlarına yürüme mesafesindeki dairemiz satılıktır.\n\n- 3 Oda 1 Salon, Geniş ve Ferah\n- Güney Cephe\n- Masrafsızdır.",
+            isVIP: false,
+            date: "Bugün",
+            seller: "Mehmet Kırboğa",
+            hideSeller: false,
+            sellerYear: "2023",
+            phone: "905441112233" // Bu ilanın sahibinin numarası
+        },
+        {
+            id: 1003,
+            name: "Eşyalı Kiralık 2+1 Aileye Uygun Daire",
+            category: "Kiralık",
+            price: "15.000",
+            location: "Silopi, Cudi Mah.",
+            images: [
+                "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?q=80&w=800&auto=format&fit=crop",
+                "https://images.unsplash.com/photo-1502672260266-1c1de2d9668f?q=80&w=800&auto=format&fit=crop",
+                "https://images.unsplash.com/photo-1493809842364-78817add7ffb?q=80&w=800&auto=format&fit=crop"
+            ],
+            description: "Memurdan kiralık, içi ful yapılı ve eşyalı temiz daire. \n\n- Eşyalar sıfır ayarındadır.\n- Bina yalıtımlıdır.\n- Aileye veya memura verilecektir. Bekara uygun değildir.\n- Peşin ve 1 kira depozito alınacaktır.",
+            isVIP: false,
+            date: "Yeni",
+            seller: "***", // İsim gizlenmiş
+            hideSeller: true,
+            sellerYear: "2024",
+            phone: "905329998877" // Gizli sahibin numarası
+        }
+    ];
+
+    let searchQuery = '';
+    let selectedCategory = 'All';
+
+    // Route Kontrolü
+    function route() {
+        const hash = window.location.hash;
+        if (hash.startsWith('#/ilan/')) {
+            const id = parseInt(hash.split('/')[2]);
+            renderDetail(id);
+        } else {
+            renderHome();
+        }
+    }
+
+    // Arama ve Filtreleme
+    function handleSearch(val) {
+        searchQuery = val;
+        renderListings();
+    }
+
+    function setCategory(cat) {
+        if (selectedCategory === cat) selectedCategory = 'All';
+        else selectedCategory = cat;
+        renderCategories(); 
+        renderListings();   
+        document.getElementById('ilanlar-bolumu').scrollIntoView({behavior: 'smooth', block: 'start'});
+    }
+
+    function renderCategories() {
+        const container = document.getElementById('category-container');
+        if(!container) return;
+
+        const cats = [
+            {icon: 'fa-car-side', label: 'Araç', val: 'Araç', color: 'text-blue-600', bg: 'bg-blue-50', activeBg: 'bg-blue-600', activeText: 'text-white'}, 
+            {icon: 'fa-house-chimney', label: 'Emlak', val: 'Ev / Arsa', color: 'text-emerald-600', bg: 'bg-emerald-50', activeBg: 'bg-emerald-600', activeText: 'text-white'}, 
+            {icon: 'fa-key', label: 'Kiralık', val: 'Kiralık', color: 'text-purple-600', bg: 'bg-purple-50', activeBg: 'bg-purple-600', activeText: 'text-white'}
+        ];
+
+        container.innerHTML = cats.map(c => {
+            let isActive = selectedCategory === c.val;
+            let activeClasses = isActive ? `${c.activeBg} ${c.activeText} scale-110 shadow-lg` : `${c.bg} ${c.color} hover:-translate-y-2 hover:shadow-md`;
+            let textClasses = isActive ? 'text-portal-red' : 'text-portal-navy group-hover:text-portal-red';
+            return `
+                <button onclick="setCategory('${c.val}')" class="flex flex-col items-center gap-3 sm:gap-4 group cursor-pointer transition-transform">
+                    <div class="w-14 h-14 sm:w-20 sm:h-20 rounded-[20px] flex items-center justify-center text-2xl sm:text-3xl shadow-sm border border-black/5 transition-all duration-300 ${activeClasses}">
+                        <i class="fa-solid ${c.icon}"></i>
+                    </div>
+                    <span class="text-xs sm:text-[15px] font-bold transition-colors ${textClasses}">${c.label}</span>
+                </button>
+            `;
+        }).join('');
+    }
+
+    // Ana Sayfa İlan Kartları Çizimi
+    function renderListings() {
+        const container = document.getElementById('listings-container');
+        const titleEl = document.getElementById('listings-title');
+        const countSpan = document.getElementById('listings-count');
+        if(!container) return;
+
+        let filtered = vehicles.filter(v => {
+            let matchCat = selectedCategory === 'All' || v.category === selectedCategory;
+            let query = searchQuery.toLowerCase();
+            let matchSearch = (v.name && v.name.toLowerCase().includes(query)) || 
+                              (v.location && v.location.toLowerCase().includes(query));
+            return matchCat && matchSearch;
+        }).sort((a,b) => (b.isVIP ? 1 : 0) - (a.isVIP ? 1 : 0));
+
+        if(titleEl) titleEl.innerText = (selectedCategory === 'All' && !searchQuery) ? 'VİTRİN İLANLARI' : 'ARAMA SONUÇLARI';
+        if(countSpan) countSpan.innerText = filtered.length + ' İlan';
+
+        if (filtered.length > 0) {
+            container.innerHTML = filtered.map(v => `
+                <div class="group bg-white rounded-[25px] overflow-hidden shadow-soft border border-gray-100 transition-all duration-300 cursor-pointer flex flex-row sm:flex-col mb-3 sm:mb-0 transform hover:-translate-y-1" onclick="window.location.hash = '#/ilan/${v.id}'">
+                    <div class="w-[130px] h-[120px] sm:w-full sm:h-[200px] shrink-0 relative bg-gray-100 overflow-hidden">
+                        <img src="${v.images[0]}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"/>
+                        ${v.isVIP ? `<div class="absolute top-2.5 left-2.5 bg-portal-red text-white text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider shadow-lg z-10">VIP İLAN</div>` : ''}
+                        ${v.images.length > 1 ? `<div class="absolute bottom-2.5 right-2.5 bg-black/60 text-white text-[10px] font-bold px-2 rounded backdrop-blur-md z-10"><i class="fa-regular fa-images"></i> ${v.images.length}</div>` : ''}
+                    </div>
+                    <div class="p-4 sm:p-5 flex flex-col flex-1 min-w-0 bg-white relative z-10">
+                        <div class="flex items-center justify-between mb-1.5">
+                            <span class="text-portal-red font-bold text-[11px] uppercase tracking-wider">${v.category}</span>
+                        </div>
+                        <h3 class="font-bold text-sm sm:text-base text-portal-navy line-clamp-2 leading-snug mb-3 group-hover:text-portal-red transition-colors">${v.name}</h3>
+                        <div class="mt-auto border-t border-gray-100 pt-3">
+                            <div class="flex items-center text-gray-500 text-[12px] mb-1.5 font-medium truncate">
+                                <i class="fa-solid fa-location-dot mr-1.5"></i>
+                                <span class="truncate">${v.location}</span>
+                            </div>
+                            <div class="font-black text-portal-red text-lg sm:text-xl tracking-tight">${v.price ? v.price + ' TL' : 'Fiyat Sorun'}</div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        } else {
+            container.innerHTML = `
+                <div class="col-span-full py-20 flex flex-col items-center justify-center bg-white rounded-[25px] border border-dashed border-gray-300">
+                    <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+                        <i class="fa-solid fa-box-open text-4xl text-gray-400"></i>
+                    </div>
+                    <span class="text-portal-navy font-bold text-lg mb-1">İlan Bulunamadı</span>
+                    <button onclick="clearFilters()" class="mt-4 text-portal-red font-bold text-sm hover:underline">Filtreleri Temizle</button>
+                </div>
+            `;
+        }
+    }
+
+    // Telefon Numarası Formatlayıcı
+    function formatPhoneDisplay(num) {
+        if(!num) return '';
+        let p = num.replace('90', '');
+        if(p.length === 10) return `0 (${p.slice(0,3)}) ${p.slice(3,6)} ${p.slice(6,8)} ${p.slice(8,10)}`;
+        return num; // Format dışıysa olduğu gibi yaz
+    }
+
+    // Kalp Tuşu Fonksiyonu
+    window.toggleHeart = function(btn) {
+        const icon = btn.querySelector('i');
+        if (icon.classList.contains('fa-regular')) {
+            icon.classList.remove('fa-regular', 'text-portal-navy');
+            icon.classList.add('fa-solid', 'text-portal-red');
+            // Hafif bir zıplama efekti eklendi
+            icon.style.transform = 'scale(1.2)';
+            setTimeout(() => icon.style.transform = 'scale(1)', 200);
+        } else {
+            icon.classList.remove('fa-solid', 'text-portal-red');
+            icon.classList.add('fa-regular', 'text-portal-navy');
+        }
+    };
+
+    // Paylaş Tuşu Fonksiyonu
+    window.shareListing = function(title, text) {
+        if (navigator.share) {
+            navigator.share({
+                title: title,
+                text: text,
+                url: window.location.href,
+            }).catch((error) => console.log('Paylaşım iptal edildi.', error));
+        } else {
+            alert('Cihazınız bu paylaşım özelliğini desteklemiyor. Linki adres çubuğundan kopyalayabilirsiniz.');
+        }
+    };
+
+    // --- ORTAK BAŞLIK (HEADER) ---
+    const appHeader = `
+        <header class="bg-white/95 backdrop-blur-md border-b border-portal-border sticky top-0 z-40 shadow-sm">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 sm:h-20 flex justify-between items-center">
+                <div class="flex items-center gap-2 sm:gap-3 cursor-pointer" onclick="window.location.hash=''">
+                    <div class="w-8 h-8 sm:w-10 sm:h-10 bg-portal-red rounded-[10px] sm:rounded-xl flex items-center justify-center text-white shadow-lg shadow-red-500/30">
+                        <i class="fa-solid fa-location-dot sm:text-xl"></i>
+                    </div>
+                    <h1 class="text-[18px] sm:text-2xl font-black font-montserrat tracking-tight text-portal-navy">
+                        <span class="text-portal-red">SİLOPİ</span> SAHİBİNDEN
+                    </h1>
+                </div>
+                <a href="whatsapp://send?phone=${SYSTEM_PHONE}&text=Merhaba,%20ilan%20vermek%20istiyorum." class="bg-gradient-to-r from-portal-navy to-gray-800 text-white text-[11px] sm:text-sm font-bold px-4 py-2.5 sm:px-6 sm:py-3 rounded-xl hover:shadow-lg transition-all shadow-md flex items-center gap-2 mobile-touch-active">
+                    <i class="fa-solid fa-plus text-portal-red"></i>
+                    <span class="hidden sm:inline">Hemen İlan Ver</span>
+                    <span class="sm:hidden">İlan Ver</span>
+                </a>
+            </div>
+        </header>
+    `;
+
+    // --- İLAN DETAY SAYFASI ---
+    function renderDetail(id) {
+        const app = document.getElementById('app');
+        const v = vehicles.find(x => x.id === id);
+        window.scrollTo(0, 0); 
+
+        if (!v) {
+            app.innerHTML = `<div class="p-10 text-center text-red-500 font-bold">İlan Bulunamadı</div>`;
+            return;
+        }
+
+        const msgText = encodeURIComponent(`Merhaba, #${v.id} numaralı ilanınız (${v.name}) hakkında bilgi almak istiyorum.`);
+        const formattedPhone = formatPhoneDisplay(v.phone);
+
+        // ÇOKLU FOTOĞRAF SLİDER ALANI HTML OLUŞTURUCUSU
+        const sliderHtml = v.images.map((img, index) => `
+            <div class="w-full h-full flex-shrink-0 snap-center relative">
+                <img src="${img}" class="w-full h-full object-cover"/>
+                <div class="absolute top-4 right-4 bg-black/60 text-white px-3 py-1 rounded-full text-xs font-bold backdrop-blur-md z-10">${index + 1}/${v.images.length}</div>
+                ${v.isVIP ? `<div class="absolute top-4 left-4 bg-portal-red text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-lg z-10">VIP İLAN</div>` : ''}
+            </div>
+        `).join('');
+
+        app.innerHTML = `
+            <div class="min-h-screen bg-portal-bg pb-24 lg:pb-10 font-sans text-[#111827]">
+                <div class="max-w-5xl mx-auto lg:px-4">
+                    
+                    <div class="bg-white h-[75px] rounded-b-[25px] lg:rounded-[25px] flex items-center justify-between px-5 shadow-soft lg:mt-4 relative z-10">
+                        <button onclick="window.location.hash=''" class="text-2xl text-portal-navy mobile-touch-active w-10 h-10 flex items-center justify-center"><i class="fa-solid fa-arrow-left"></i></button>
+                        
+                        <div class="text-xl sm:text-2xl font-black font-montserrat tracking-tight text-portal-navy">
+                            <i class="fa-solid fa-location-dot text-portal-red"></i> <span class="text-portal-red">SİLOPİ</span> SAHİBİNDEN
+                        </div>
+                        
+                        <div class="flex items-center gap-3">
+                            <button onclick="shareListing('Silopi Sahibinden', '${v.name}')" class="text-2xl text-portal-navy mobile-touch-active w-10 h-10 flex items-center justify-center hover:bg-gray-50 rounded-full transition-colors"><i class="fa-solid fa-arrow-up-from-bracket"></i></button>
+                            <button onclick="toggleHeart(this)" class="text-2xl text-portal-navy mobile-touch-active w-10 h-10 flex items-center justify-center hover:bg-gray-50 rounded-full transition-all duration-300"><i class="fa-regular fa-heart transition-colors"></i></button>
+                        </div>
+                    </div>
+
+                    <div class="lg:grid lg:grid-cols-3 lg:gap-6 lg:mt-6">
+                        <div class="lg:col-span-2">
+                            
+                            <div class="mt-5 lg:mt-0 h-[350px] sm:h-[450px] rounded-[25px] overflow-hidden mx-4 lg:mx-0 shadow-soft relative bg-gray-200">
+                                <div class="flex overflow-x-auto snap-x snap-mandatory no-scrollbar w-full h-full">
+                                    ${sliderHtml}
+                                </div>
+                            </div>
+
+                            <div class="bg-white mt-4 mx-4 lg:mx-0 p-5 rounded-[25px] shadow-soft">
+                                <div class="flex justify-between items-center mb-1">
+                                    <div class="text-portal-red font-bold text-[16px] lg:text-lg uppercase tracking-wide">${v.category}</div>
+                                    <div class="text-gray-500 font-medium text-sm lg:text-base">${v.date}</div>
+                                </div>
+                                <div class="text-[22px] lg:text-[27px] font-extrabold text-portal-navy my-3 leading-snug">${v.name}</div>
+                                <div class="text-portal-red text-[28px] lg:text-[32px] font-bold mb-3">${v.price ? v.price + ' TL' : 'Fiyat Sorun'}</div>
+                                <div class="text-[#64748b] text-[16px] lg:text-[18px] font-medium flex items-center gap-2">
+                                    <i class="fa-solid fa-location-dot"></i> ${v.location}
+                                </div>
+                            </div>
+
+                            <div class="bg-white mt-4 mx-4 lg:mx-0 p-5 rounded-[25px] shadow-soft">
+                                <h2 class="text-[20px] lg:text-[22px] font-extrabold text-portal-navy flex items-center gap-3 mb-4 border-b border-gray-100 pb-4">
+                                    <i class="fa-solid fa-list-ul text-portal-red"></i> İlan Açıklaması
+                                </h2>
+                                <div class="text-[16px] lg:text-[18px] leading-[1.6] text-gray-700 whitespace-pre-wrap">${v.description}</div>
+                            </div>
+                        </div>
+
+                        <div class="lg:col-span-1 mt-4 lg:mt-0 space-y-4">
+                            <div class="bg-white mx-4 lg:mx-0 p-5 rounded-[25px] shadow-soft flex items-center justify-between">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-[60px] h-[60px] lg:w-[70px] lg:h-[70px] rounded-full bg-gray-200 flex items-center justify-center text-gray-400 text-3xl shrink-0">
+                                        <i class="${v.hideSeller ? 'fa-solid fa-user-secret' : 'fa-solid fa-user'}"></i>
+                                    </div>
+                                    <div>
+                                        <div class="text-[18px] lg:text-[22px] font-bold text-portal-navy leading-tight">
+                                            ${v.hideSeller ? '*** (Gizli Satıcı)' : v.seller}
+                                        </div>
+                                        <div class="text-sm text-gray-500 mt-0.5">Üye ${v.sellerYear || '2024'}</div>
+                                        <div class="text-[#16a34a] text-xs lg:text-sm font-bold mt-1.5 flex items-center gap-1">
+                                            <i class="fa-solid fa-circle-check"></i> Doğrulanmış İlan
+                                        </div>
+                                    </div>
+                                </div>
+                                <a href="tel:+${v.phone}" class="text-portal-navy font-bold text-lg text-center hidden lg:block hover:text-portal-red transition-colors shrink-0">
+                                    <i class="fa-solid fa-phone mb-1"></i><br>Ara
+                                </a>
+                            </div>
+
+                            <div class="bg-white mx-4 lg:mx-0 px-5 py-4 rounded-[20px] shadow-soft text-center border-2 border-green-50 hidden lg:block">
+                                <span class="text-xs text-gray-400 uppercase font-bold tracking-widest block mb-1">İletişim Numarası</span>
+                                <span class="text-xl font-black text-portal-navy tracking-wide">${formattedPhone}</span>
+                            </div>
+
+                            <div class="bg-white mt-4 mx-4 lg:mx-0 p-5 rounded-[25px] shadow-soft flex justify-between text-center overflow-x-auto no-scrollbar">
+                                <div class="text-[12px] lg:text-[14px] text-gray-500 min-w-[70px]">
+                                    <i class="fa-solid fa-fingerprint text-2xl mb-1.5 text-gray-400"></i><br>İlan No<br><b class="text-[14px] lg:text-[18px] text-portal-navy mt-0.5 block">#${v.id}</b>
+                                </div>
+                                <div class="text-[12px] lg:text-[14px] text-gray-500 min-w-[70px]">
+                                    <i class="fa-solid fa-layer-group text-2xl mb-1.5 text-gray-400"></i><br>Kategori<br><b class="text-[14px] lg:text-[18px] text-portal-navy mt-0.5 block">${v.category.split('/')[0].trim()}</b>
+                                </div>
+                                <div class="text-[12px] lg:text-[14px] text-gray-500 min-w-[70px]">
+                                    <i class="fa-regular fa-calendar text-2xl mb-1.5 text-gray-400"></i><br>Tarih<br><b class="text-[14px] lg:text-[18px] text-portal-navy mt-0.5 block">${v.date}</b>
+                                </div>
+                            </div>
+
+                            <div class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md p-4 shadow-[0_-5px_15px_rgba(0,0,0,0.05)] lg:static lg:bg-transparent lg:shadow-none lg:p-0 z-50">
+                                <div class="flex gap-3 w-full lg:mt-2">
+                                    <a href="tel:+${v.phone}" class="w-1/2 h-[55px] lg:h-[60px] bg-[#102a43] text-white rounded-[15px] flex items-center justify-center font-bold text-[16px] lg:text-[18px] mobile-touch-active hover:bg-gray-800 transition-colors shadow-lg">
+                                        <i class="fa-solid fa-phone mr-2"></i> Ara
+                                    </a>
+                                    <a href="whatsapp://send?phone=${v.phone}&text=${msgText}" class="w-1/2 h-[55px] lg:h-[60px] bg-[#16c763] text-white rounded-[15px] flex items-center justify-center font-bold text-[16px] lg:text-[18px] mobile-touch-active hover:bg-green-600 transition-colors shadow-lg shadow-green-500/30">
+                                        <i class="fa-brands fa-whatsapp text-xl mr-2"></i> Yaz
+                                    </a>
+                                </div>
+                            </div>
+
+                            <div class="text-center text-[#64748b] text-xs lg:text-sm mt-6 mb-8 lg:mb-0 px-4 flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-shield-halved"></i> Güvenli alışveriş için satıcıyla iletişime geçin.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // --- ANA SAYFA ÇİZİMİ ---
+    function renderHome() {
+        const app = document.getElementById('app');
+        app.innerHTML = `
+            <div class="min-h-screen flex flex-col bg-portal-bg">
+                ${appHeader}
+                <section class="portal-hero pt-14 pb-24 sm:pt-20 sm:pb-32 px-4 relative overflow-hidden z-10">
+                    <div class="relative z-10 max-w-4xl mx-auto text-center">
+                        <span class="inline-block py-1.5 px-4 rounded-full bg-white/10 border border-white/20 text-white text-xs font-bold tracking-widest uppercase mb-5 backdrop-blur-md">YENİ NESİL İLAN PLATFORMU</span>
+                        <h2 class="text-3xl sm:text-5xl md:text-6xl font-black font-montserrat text-white mb-6 tracking-tight leading-tight">
+                            Silopi'nin En Güvenilir <br class="hidden sm:block"/> <span class="text-transparent bg-clip-text bg-gradient-to-r from-white to-red-100">İlan Pazarı</span>
+                        </h2>
+                        
+                        <div class="bg-white/95 backdrop-blur-xl p-2 sm:p-2.5 rounded-[20px] flex shadow-glass max-w-3xl mx-auto mt-10 border border-white/50">
+                            <div class="flex-1 flex items-center px-3 sm:px-5">
+                                <i class="fa-solid fa-magnifying-glass text-gray-400 text-lg mr-3"></i>
+                                <input type="text" id="searchInput" placeholder="Kelime, marka veya mahalle ara..." class="w-full bg-transparent border-none focus:ring-0 text-sm sm:text-base font-medium text-portal-navy placeholder-gray-400 outline-none" oninput="handleSearch(this.value)" autocomplete="off" />
+                            </div>
+                            <button onclick="document.getElementById('ilanlar-bolumu').scrollIntoView({behavior: 'smooth'})" class="bg-portal-red text-white px-6 py-3.5 rounded-[15px] font-bold text-sm sm:text-base hover:bg-red-700 transition-colors shadow-lg shadow-red-500/30">Ara</button>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="-mt-12 sm:-mt-16 max-w-5xl mx-auto px-4 w-full relative z-20">
+                    <div id="category-container" class="bg-white rounded-[25px] shadow-soft p-5 sm:p-8 flex justify-around sm:justify-center sm:gap-16 border border-gray-100"></div>
+                </section>
+
+                <section id="ilanlar-bolumu" class="py-16 max-w-7xl w-full mx-auto px-4 sm:px-6 z-10 scroll-mt-20">
+                    <div class="flex items-center gap-3 mb-8">
+                        <div class="w-1.5 h-8 bg-portal-red rounded-full"></div>
+                        <h2 id="listings-title" class="text-2xl sm:text-3xl font-black font-montserrat tracking-tight text-portal-navy">VİTRİN İLANLARI</h2>
+                        <span id="listings-count" class="ml-auto text-sm font-bold text-gray-500 bg-white px-3 py-1 rounded-lg border border-gray-200"></span>
+                    </div>
+                    <div id="listings-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6"></div>
+                </section>
+
+                <footer class="py-10 bg-white text-center mt-auto border-t border-gray-200">
+                    <div class="flex items-center justify-center gap-2 mb-3">
+                        <i class="fa-solid fa-location-dot text-portal-red"></i>
+                        <span class="text-lg font-black font-montserrat tracking-tight text-portal-navy">SİLOPİ SAHİBİNDEN</span>
+                    </div>
+                    <p class="text-[11px] font-bold text-gray-400 uppercase tracking-widest">© 2026 TÜM HAKLARI SAKLIDIR.</p>
+                </footer>
+            </div>
+        `;
+
+        document.getElementById('searchInput').value = searchQuery;
+        renderCategories();
+        renderListings();
+    }
+
+    // Sistemi Başlat
+    window.addEventListener('hashchange', route);
+    window.onload = route;
+
+</script>
+</body>
+</html>
