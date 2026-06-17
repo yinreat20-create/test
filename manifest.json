@@ -1,7 +1,8 @@
 {
   "name": "Silopi Sahibinden",
-  "short_name": "Silopi Emlak",
-  "start_url": ".",
+  "short_name": "Silopi Sahibinden",
+  "start_url": "/test/",
+  "scope": "/test/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#d32f2f",
